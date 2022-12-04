@@ -14,50 +14,77 @@ def setUpDatabase(db_name):
     return cur, conn
 
 
-# CREATE TABLE FOR EMPLOYEE INFORMATION IN DATABASE AND ADD INFORMATION
-def create_employee_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS employees (employee_id INTEGER PRIMARY KEY, first_name TEXT, last_name TEXT, job_id INTEGER, hire_date TEXT, salary NUMERIC)")
+def create_covid_table(cur, conn):
+    cur.execute("CREATE TABLE IF NOT EXISTS covid (country TEXT PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
     conn.commit()
-# ADD EMPLOYEE'S INFORMTION TO THE TABLE
-# a list of lists
-def add_employee(filename, cur, conn):
-    #load .json file and read job data
-    # WE GAVE YOU THIS TO READ IN DATA
-    f = open(os.path.abspath(os.path.join(os.path.dirname(__file__), filename)))
-    file_data = f.read()
-    f.close()
-    # THE REST IS UP TO YOU
-    data = json.loads(file_data)
-    for item in data:
-        id = item['employee_id']
-        f_name = item['first_name']
-        l_name = item['last_name']
-        date = item['hire_date']
-        job = item['job_id']
-        sal = item['salary']
+
+def add_country(cur, conn):
+
+    covid_data = covid.get_covid_data()
+    for item in covid_data:
+        country = item['country']
+        cases = item['cases']
+        deaths = item['deaths']
+        active = item['active']
+       
         cur.execute(
             """
-            INSERT OR IGNORE INTO employees (employee_id, first_name, last_name, 
-            job_id, hire_date, salary)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT OR IGNORE INTO covid (country, cases, deaths, 
+            active)
+            VALUES (?, ?, ?, ?)
             """,
-            (id, f_name, l_name, job, date, sal)
+            (country, cases, deaths, active)
         )
     conn.commit()
 
+def create_population_table(cur, conn):
+    cur.execute("CREATE TABLE IF NOT EXISTS population (country TEXT PRIMARY KEY, over_65 INTEGER, total_population INTEGER)")
+    conn.commit()
+
+def add_population(cur, conn):
+
+    population_data = population.get_population_data()
+    for item in population_data:
+        country = item['country']
+        over_65 = item['over_65']
+        total_population = item['total_population']
+       
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO population (country, over_65, total_population)
+            VALUES (?, ?, ?)
+            """,
+            (country, over_65, total_population)
+        )
+    conn.commit()
+
+def join_tables(cur, conn):
+    cur.execute(
+        """
+        SELECT covid.country, covid.cases, covid.deaths, covid.active, population.over_65, population.total_population
+        FROM population
+        JOIN covid ON population.country = covid.country
+        """
+    )
+
+    res = cur.fetchall()
+    conn.commit()
+    print(res)
+    return res
+    
         
 
 def main():
-    
     # SETUP DATABASE AND TABLE
     cur, conn = setUpDatabase('database.db')
 
-    # create_employee_table(cur, conn)
-    # add_employee("employee.json",cur, conn)
-    # job_and_hire_date(cur, conn)
-    # wrong_salary = (problematic_salary(cur, conn))
-    # print(wrong_salary)
-    # visualization_salary_data(cur, conn)
+    create_covid_table(cur, conn)
+    add_country(cur, conn)
+
+    create_population_table(cur, conn)
+    add_population(cur, conn)
+
+    join_tables(cur, conn)
 
 if __name__ == "__main__":
     main()
