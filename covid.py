@@ -26,7 +26,7 @@ def get_covid_data():
     return covid_list
 
 def main():
-    get_covid_data()
+    print(get_covid_data())
 
 if __name__ == "__main__":
     main()

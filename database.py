@@ -22,8 +22,7 @@ def create_country_code_table(cur, conn, data):
         
     cur.execute("CREATE TABLE IF NOT EXISTS codes (id INTEGER PRIMARY KEY, country_name TEXT UNIQUE)")
     for i in range(len(country_list)):
-
-        cur.execute("INSERT OR IGNORE INTO codes (id,type) VALUES (?,?)",(i,country_list[i]))
+        cur.execute("INSERT OR IGNORE INTO codes (id,country_name) VALUES (?,?)",(i,country_list[i]))
 
     conn.commit()
 
@@ -31,8 +30,8 @@ def create_covid_table(cur, conn, data):
     cur.execute("CREATE TABLE IF NOT EXISTS covid (country TEXT PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
 
     for i in data:
-        cur.execute('SELECT id from codes where country = ?', (i['country']))
-        country_id = int(cur.fetchone()[0])
+        cur.execute('SELECT id from codes where country_name = ?', [i['country']])
+        country_id = (cur.fetchone())
     
     conn.commit()
 
@@ -48,7 +47,7 @@ def add_country(cur, conn):
             """
             INSERT OR IGNORE INTO covid (cases, deaths, 
             active)
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?)
             """,
             (cases, deaths, active)
         )
