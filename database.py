@@ -55,7 +55,7 @@ def add_country(cur, conn):
 
 
 def create_population_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS population (country TEXT PRIMARY KEY, over_65 INTEGER, total_population INTEGER)")
+    cur.execute("CREATE TABLE IF NOT EXISTS population (country TEXT PRIMARY KEY, under_35 INTEGER, over_65 INTEGER, total_population INTEGER)")
     conn.commit()
 
 def add_population(cur, conn):
@@ -63,22 +63,23 @@ def add_population(cur, conn):
     population_data = population.get_population_data()
     for item in population_data:
         country = item['country']
+        under_35 = item['under_35']
         over_65 = item['over_65']
         total_population = item['total_population']
        
         cur.execute(
             """
-            INSERT OR IGNORE INTO population (country, over_65, total_population)
-            VALUES (?, ?, ?)
+            INSERT OR IGNORE INTO population (country, under_35, over_65, total_population)
+            VALUES (?, ?, ?, ?)
             """,
-            (country, over_65, total_population)
+            (country, under_35, over_65, total_population)
         )
     conn.commit()
 
 def join_tables(cur, conn):
     cur.execute(
         """
-        SELECT covid.country, covid.cases, covid.deaths, covid.active, population.over_65, population.total_population
+        SELECT covid.country, covid.cases, covid.deaths, covid.active, population.under_35, population.over_65, population.total_population
         FROM population
         JOIN covid ON population.country = covid.country
         """
@@ -86,7 +87,6 @@ def join_tables(cur, conn):
 
     res = cur.fetchall()
     conn.commit()
-    print(res)
     return res
     
         
