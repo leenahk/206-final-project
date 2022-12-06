@@ -13,29 +13,47 @@ def setUpDatabase(db_name):
     cur = conn.cursor()
     return cur, conn
 
+def create_country_code_table(cur, conn, data):
+    country_list = []
+    for country in data:
+        country_name = country['country']
+        if country_name not in country_list:
+            country_list.append(country_name)
+        
+    cur.execute("CREATE TABLE IF NOT EXISTS codes (id INTEGER PRIMARY KEY, country_name TEXT UNIQUE)")
+    for i in range(len(country_list)):
 
-def create_covid_table(cur, conn):
+        cur.execute("INSERT OR IGNORE INTO codes (id,type) VALUES (?,?)",(i,country_list[i]))
+
+    conn.commit()
+
+def create_covid_table(cur, conn, data):
     cur.execute("CREATE TABLE IF NOT EXISTS covid (country TEXT PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
+
+    for i in data:
+        cur.execute('SELECT id from codes where country = ?', (i['country']))
+        country_id = int(cur.fetchone()[0])
+    
     conn.commit()
 
 def add_country(cur, conn):
 
     covid_data = covid.get_covid_data()
     for item in covid_data:
-        country = item['country']
         cases = item['cases']
         deaths = item['deaths']
         active = item['active']
        
         cur.execute(
             """
-            INSERT OR IGNORE INTO covid (country, cases, deaths, 
+            INSERT OR IGNORE INTO covid (cases, deaths, 
             active)
             VALUES (?, ?, ?, ?)
             """,
-            (country, cases, deaths, active)
+            (cases, deaths, active)
         )
     conn.commit()
+
 
 def create_population_table(cur, conn):
     cur.execute("CREATE TABLE IF NOT EXISTS population (country TEXT PRIMARY KEY, over_65 INTEGER, total_population INTEGER)")
@@ -78,7 +96,9 @@ def main():
     # SETUP DATABASE AND TABLE
     cur, conn = setUpDatabase('database.db')
 
-    create_covid_table(cur, conn)
+    create_country_code_table(cur, conn, population.get_population_data())
+
+    create_covid_table(cur, conn, covid.get_covid_data())
     add_country(cur, conn)
 
     create_population_table(cur, conn)
