@@ -13,6 +13,7 @@ def setUpDatabase(db_name):
     cur = conn.cursor()
     return cur, conn
 
+#creating/filling in the country codes table
 def create_country_code_table(cur, conn, data):
     country_list = []
     for country in data:
@@ -26,30 +27,40 @@ def create_country_code_table(cur, conn, data):
 
     conn.commit()
 
+#create table with each countries name and covid statistics
 def create_covid_table(cur, conn, data):
-    cur.execute("CREATE TABLE IF NOT EXISTS covid (country TEXT PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
+    cur.execute("CREATE TABLE IF NOT EXISTS covid (country INTEGER PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
 
-    for i in data:
-        cur.execute('SELECT id from codes where country_name = ?', [i['country']])
-        country_id = (cur.fetchone())
+    
+        
     
     conn.commit()
 
+#filling in covid statistics table with using country codes
 def add_country(cur, conn):
 
     covid_data = covid.get_covid_data()
     for item in covid_data:
+        # print(item)
+        cur.execute('SELECT id from codes where country_name = ?', [item['country']])
+        
+        country_id = (cur.fetchone())
+        # print(country_id)
+        if country_id != None:
+            country_id = country_id[0]
+        else:
+            continue
         cases = item['cases']
         deaths = item['deaths']
         active = item['active']
        
         cur.execute(
             """
-            INSERT OR IGNORE INTO covid (cases, deaths, 
+            INSERT OR IGNORE INTO covid (country, cases, deaths, 
             active)
-            VALUES (?, ?, ?)
+            VALUES (?, ?, ?, ?)
             """,
-            (cases, deaths, active)
+            (country_id, cases, deaths, active,)
         )
     conn.commit()
 
