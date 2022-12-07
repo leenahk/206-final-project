@@ -13,39 +13,36 @@ def setUpDatabase(db_name):
     cur = conn.cursor()
     return cur, conn
 
-#creating/filling in the country codes table
-def create_country_code_table(cur, conn, data):
+#creating the country codes table
+def create_country_code_table(cur, conn):
+    cur.execute("CREATE TABLE IF NOT EXISTS codes (id INTEGER PRIMARY KEY, country_name TEXT UNIQUE)")
+    conn.commit()
+
+#filling in the country codes table
+def add_country_code(cur, conn, population_data):
     country_list = []
-    for country in data:
+    for country in population_data:
         country_name = country['country']
         if country_name not in country_list:
             country_list.append(country_name)
-        
-    cur.execute("CREATE TABLE IF NOT EXISTS codes (id INTEGER PRIMARY KEY, country_name TEXT UNIQUE)")
+
     for i in range(len(country_list)):
         cur.execute("INSERT OR IGNORE INTO codes (id,country_name) VALUES (?,?)",(i,country_list[i]))
-
+    
     conn.commit()
 
 #create table with each countries name and covid statistics
-def create_covid_table(cur, conn, data):
-    cur.execute("CREATE TABLE IF NOT EXISTS covid (country INTEGER PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
-
-    
-        
-    
+def create_covid_table(cur, conn):
+    cur.execute("CREATE TABLE IF NOT EXISTS covid (country_id INTEGER PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
     conn.commit()
 
 #filling in covid statistics table with using country codes
-def add_country(cur, conn):
+def add_covid_country(cur, conn, covid_data):
 
-    covid_data = covid.get_covid_data()
     for item in covid_data:
-        # print(item)
         cur.execute('SELECT id from codes where country_name = ?', [item['country']])
         
         country_id = (cur.fetchone())
-        # print(country_id)
         if country_id != None:
             country_id = country_id[0]
         else:
@@ -56,7 +53,7 @@ def add_country(cur, conn):
        
         cur.execute(
             """
-            INSERT OR IGNORE INTO covid (country, cases, deaths, 
+            INSERT OR IGNORE INTO covid (country_id, cases, deaths, 
             active)
             VALUES (?, ?, ?, ?)
             """,
@@ -66,33 +63,37 @@ def add_country(cur, conn):
 
 
 def create_population_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS population (country TEXT PRIMARY KEY, under_35 INTEGER, over_65 INTEGER, total_population INTEGER)")
+    cur.execute("CREATE TABLE IF NOT EXISTS population (country_id INTEGER PRIMARY KEY, under_35 INTEGER, over_65 INTEGER, total_population INTEGER)")
     conn.commit()
 
-def add_population(cur, conn):
+def add_population(cur, conn, population_data):
 
-    population_data = population.get_population_data()
     for item in population_data:
-        country = item['country']
+        cur.execute('SELECT id from codes where country_name = ?', [item['country']])
+        country_id = (cur.fetchone())
+        if country_id != None:
+            country_id = country_id[0]
+        else:
+            continue
         under_35 = item['under_35']
         over_65 = item['over_65']
         total_population = item['total_population']
        
         cur.execute(
             """
-            INSERT OR IGNORE INTO population (country, under_35, over_65, total_population)
+            INSERT OR IGNORE INTO population (country_id, under_35, over_65, total_population)
             VALUES (?, ?, ?, ?)
             """,
-            (country, under_35, over_65, total_population)
+            (country_id, under_35, over_65, total_population)
         )
     conn.commit()
 
 def join_tables(cur, conn):
     cur.execute(
         """
-        SELECT covid.country, covid.cases, covid.deaths, covid.active, population.under_35, population.over_65, population.total_population
+        SELECT covid.country_id, covid.cases, covid.deaths, covid.active, population.under_35, population.over_65, population.total_population
         FROM population
-        JOIN covid ON population.country = covid.country
+        JOIN covid ON population.country_id = covid.country_id
         """
     )
 
@@ -105,14 +106,18 @@ def join_tables(cur, conn):
 def main():
     # SETUP DATABASE AND TABLE
     cur, conn = setUpDatabase('database.db')
-
-    create_country_code_table(cur, conn, population.get_population_data())
-
-    create_covid_table(cur, conn, covid.get_covid_data())
-    add_country(cur, conn)
-
+    population_data = population.get_population_data()
+    covid_data = covid.get_covid_data()
+    
+    # CREATE TABLES
+    create_country_code_table(cur, conn)
+    create_covid_table(cur, conn)
     create_population_table(cur, conn)
-    add_population(cur, conn)
+
+    # ADD TO TABLES
+    add_country_code(cur, conn, population.get_population_data())
+    add_covid_country(cur, conn, covid.get_covid_data())
+    add_population(cur, conn, population.get_population_data())
 
     join_tables(cur, conn)
 
