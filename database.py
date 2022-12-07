@@ -37,27 +37,29 @@ def create_covid_table(cur, conn):
     conn.commit()
 
 #filling in covid statistics table with using country codes
-def add_covid_country(cur, conn, covid_data):
+def add_covid_country(cur, conn, start_index):
 
-    for item in covid_data:
+    for item in covid.get_covid_data()[start_index:start_index + 25]:
         cur.execute('SELECT id from codes where country_name = ?', [item['country']])
         
         country_id = (cur.fetchone())
+
         if country_id != None:
             country_id = country_id[0]
         else:
             continue
+
         cases = item['cases']
         deaths = item['deaths']
         active = item['active']
-       
+    
         cur.execute(
             """
             INSERT OR IGNORE INTO covid (country_id, cases, deaths, 
             active)
             VALUES (?, ?, ?, ?)
             """,
-            (country_id, cases, deaths, active,)
+            (country_id, cases, deaths, active)
         )
     conn.commit()
 
@@ -100,7 +102,6 @@ def join_tables(cur, conn):
     res = cur.fetchall()
     conn.commit()
     return res
-    
         
 
 def main():
@@ -111,15 +112,26 @@ def main():
     
     # CREATE TABLES
     create_country_code_table(cur, conn)
-    create_covid_table(cur, conn)
-    create_population_table(cur, conn)
+    # create_covid_table(cur, conn)
+    cur.execute("CREATE TABLE IF NOT EXISTS covid (country_id INTEGER PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
+    cur.execute('SELECT max (country_id) from covid')
 
-    # ADD TO TABLES
+    start_index = cur.fetchone()[0]
+    
+    if start_index == None:
+        start_index = 0    
+    
+    add_covid_country(cur, conn, start_index)
+    
+    
+    # create_population_table(cur, conn)
+
+    # # ADD TO TABLES
     add_country_code(cur, conn, population.get_population_data())
-    add_covid_country(cur, conn, covid.get_covid_data())
-    add_population(cur, conn, population.get_population_data())
+    # add_covid_country(cur, conn, covid.get_covid_data(), start_index)
+    # # add_population(cur, conn, population.get_population_data())
 
-    join_tables(cur, conn)
+    # join_tables(cur, conn)
 
 if __name__ == "__main__":
     main()
