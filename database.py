@@ -1,6 +1,7 @@
 import unittest
 import sqlite3
 import json
+import pickle
 import os
 import matplotlib.pyplot as plt
 import covid
@@ -116,21 +117,6 @@ def add_population(cur, conn, start_index, data):
         )
     conn.commit()
 
-def join_tables(cur, conn):
-    cur.execute(
-        """
-        SELECT codes.country_name, covid.country_id, covid.cases, covid.deaths, covid.active, population.under_35, population.over_65, population.total_population
-        FROM population
-        JOIN covid ON population.country_id = covid.country_id
-        
-        """
-    )
-
-    res = cur.fetchall()
-    conn.commit()
-    print(res)
-    return res
-        
 
 def main():
     master_list = make_master_list()
@@ -177,8 +163,6 @@ def main():
         start_index += 1
     
     add_population(cur, conn, start_index, fixed_population_data)
-   
-    join_tables(cur, conn)
 
 if __name__ == "__main__":
     main()
