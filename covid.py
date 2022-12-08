@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+import population
 
 def get_covid_data():
     r = requests.get("https://disease.sh/v3/covid-19/countries")
@@ -20,13 +21,14 @@ def get_covid_data():
         temp_dict["cases"] = country["cases"]
         temp_dict["deaths"] = country["deaths"]
         temp_dict["active"] = country["active"]
-        # print(temp_dict)
         covid_list.append(temp_dict)
-    
-    return covid_list
+    sorted_covid_list = sorted(covid_list, key=lambda x: x['country'])
+   
+    return sorted_covid_list
+
 
 def main():
-    print(get_covid_data())
+    get_covid_data()
 
 if __name__ == "__main__":
     main()

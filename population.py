@@ -2,6 +2,7 @@ import json
 import os
 import requests
 import csv
+import covid
 
 def get_population_data():
 
@@ -43,12 +44,12 @@ def get_population_data():
         
         pop_info.append(pop_dict)
 
-    return pop_info
+    sorted_pop_info = sorted(pop_info, key=lambda x: x['country'])
 
-
+    return sorted_pop_info
 
 def main():
-   print(get_population_data())
+ print(get_population_data())
 
 if __name__ == "__main__":
     main()

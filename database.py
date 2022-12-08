@@ -6,6 +6,32 @@ import matplotlib.pyplot as plt
 import covid
 import population
 
+def make_master_list():
+    master_country_list = []
+    covid_data = covid.get_covid_data()
+    population_data = population.get_population_data()
+    pop_list = []
+    for i in population_data:
+        pop_list.append(i['country'])
+
+    for i in covid_data:
+        if i['country'] in pop_list:
+            master_country_list.append(i['country'])
+
+    return master_country_list
+
+def fixed_data(data, master_country_list):
+    fixed_data = []
+    index = 0
+    for i in data:
+        if i['country'] in master_country_list:
+            if index < 194:
+                if data[index]['country'] != data[index+1]['country']:
+                    fixed_data.append(i)
+        index += 1
+    return fixed_data
+
+
 # Create Database
 def setUpDatabase(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -19,9 +45,9 @@ def create_country_code_table(cur, conn):
     conn.commit()
 
 #filling in the country codes table
-def add_country_code(cur, conn, population_data):
+def add_country_code(cur, conn, data):
     country_list = []
-    for country in population_data:
+    for country in data:
         country_name = country['country']
         if country_name not in country_list:
             country_list.append(country_name)
@@ -37,9 +63,9 @@ def create_covid_table(cur, conn):
     conn.commit()
 
 #filling in covid statistics table with using country codes
-def add_covid_country(cur, conn, start_index):
+def add_covid_country(cur, conn, start_index, data):
 
-    for item in covid.get_covid_data()[start_index:start_index + 25]:
+    for item in data[start_index:start_index + 25]:
         cur.execute('SELECT id from codes where country_name = ?', [item['country']])
         
         country_id = (cur.fetchone())
@@ -68,9 +94,9 @@ def create_population_table(cur, conn):
     cur.execute("CREATE TABLE IF NOT EXISTS population (country_id INTEGER PRIMARY KEY, under_35 INTEGER, over_65 INTEGER, total_population INTEGER)")
     conn.commit()
 
-def add_population(cur, conn, population_data):
+def add_population(cur, conn, start_index, data):
 
-    for item in population_data:
+    for item in data[start_index:start_index + 25]:
         cur.execute('SELECT id from codes where country_name = ?', [item['country']])
         country_id = (cur.fetchone())
         if country_id != None:
@@ -93,45 +119,66 @@ def add_population(cur, conn, population_data):
 def join_tables(cur, conn):
     cur.execute(
         """
-        SELECT covid.country_id, covid.cases, covid.deaths, covid.active, population.under_35, population.over_65, population.total_population
+        SELECT codes.country_name, covid.country_id, covid.cases, covid.deaths, covid.active, population.under_35, population.over_65, population.total_population
         FROM population
         JOIN covid ON population.country_id = covid.country_id
+        
         """
     )
 
     res = cur.fetchall()
     conn.commit()
+    print(res)
     return res
         
 
 def main():
+    master_list = make_master_list()
+    covid_data = covid.get_covid_data()
+    population_data = population.get_population_data()
+    fixed_covid_data = fixed_data(covid_data, master_list)
+    fixed_population_data = fixed_data(population_data, master_list)
+
+
     # SETUP DATABASE AND TABLE
     cur, conn = setUpDatabase('database.db')
-    population_data = population.get_population_data()
-    covid_data = covid.get_covid_data()
     
     # CREATE TABLES
+    # code table
     create_country_code_table(cur, conn)
-    # create_covid_table(cur, conn)
+    add_country_code(cur, conn, fixed_covid_data)
+    
+
+    # covid table
     cur.execute("CREATE TABLE IF NOT EXISTS covid (country_id INTEGER PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
     cur.execute('SELECT max (country_id) from covid')
 
     start_index = cur.fetchone()[0]
     
     if start_index == None:
-        start_index = 0    
-    
-    add_covid_country(cur, conn, start_index)
-    
-    
-    # create_population_table(cur, conn)
+        start_index = 0 
 
-    # # ADD TO TABLES
-    add_country_code(cur, conn, population.get_population_data())
-    # add_covid_country(cur, conn, covid.get_covid_data(), start_index)
-    # # add_population(cur, conn, population.get_population_data())
+    else:
+        start_index += 1
+    
+    
+    add_covid_country(cur, conn, start_index, fixed_covid_data)
+    
+    # population table
+    cur.execute("CREATE TABLE IF NOT EXISTS population (country_id INTEGER PRIMARY KEY, under_35 INTEGER, over_65 INTEGER, total_population INTEGER)")
+    cur.execute('SELECT max (country_id) from population')
+    
+    start_index = cur.fetchone()[0]
+    
+    if start_index == None:
+        start_index = 0 
 
-    # join_tables(cur, conn)
+    else:
+        start_index += 1
+    
+    add_population(cur, conn, start_index, fixed_population_data)
+   
+    join_tables(cur, conn)
 
 if __name__ == "__main__":
     main()
