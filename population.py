@@ -11,11 +11,6 @@ def get_population_data():
     resp = requests.get('https://api.census.gov/data/timeseries/idb/5year?get=NAME,POP,CBR,CDR,E0,AREA_KM2,'+x+y+'GENC&YR=2021')
     data = resp.text
     pop_data = json.loads(data)
-    
-    # write population data file
-    with open("population_data.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(pop_data)
 
     # read population data file
     file = open('population_data.csv', 'r')
@@ -49,7 +44,7 @@ def get_population_data():
     return sorted_pop_info
 
 def main():
- print(get_population_data())
+ get_population_data()
 
 if __name__ == "__main__":
     main()

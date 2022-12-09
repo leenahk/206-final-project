@@ -9,9 +9,6 @@ def get_covid_data():
     covid_data = json.loads(data)
 
     json_data = json.dumps(covid_data)
-    
-    with open("covid.json", "w") as outfile:
-        outfile.write(json_data)
 
     # #build new dict with state, cases, deaths, active
     covid_list = []

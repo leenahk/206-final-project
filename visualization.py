@@ -101,7 +101,7 @@ def main():
 
     # CREATE TABLES
     # code table
-    cur, conn = database.setUpDatabase('database.db')
+    cur, conn = database.set_up_database('database.db')
    
     final_res = join_tables(cur, conn)
 

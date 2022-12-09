@@ -11,6 +11,7 @@ def make_master_list():
     master_country_list = []
     covid_data = covid.get_covid_data()
     population_data = population.get_population_data()
+    
     pop_list = []
     for i in population_data:
         pop_list.append(i['country'])
@@ -34,7 +35,7 @@ def fixed_data(data, master_country_list):
 
 
 # Create Database
-def setUpDatabase(db_name):
+def set_up_database(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
     conn = sqlite3.connect(path+'/'+db_name)
     cur = conn.cursor()
@@ -56,11 +57,6 @@ def add_country_code(cur, conn, data):
     for i in range(len(country_list)):
         cur.execute("INSERT OR IGNORE INTO codes (id,country_name) VALUES (?,?)",(i,country_list[i]))
     
-    conn.commit()
-
-#create table with each countries name and covid statistics
-def create_covid_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS covid (country_id INTEGER PRIMARY KEY, cases INTEGER, deaths INTEGER, active INTEGER)")
     conn.commit()
 
 #filling in covid statistics table with using country codes
@@ -90,10 +86,6 @@ def add_covid_country(cur, conn, start_index, data):
         )
     conn.commit()
 
-
-def create_population_table(cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS population (country_id INTEGER PRIMARY KEY, under_35 INTEGER, over_65 INTEGER, total_population INTEGER)")
-    conn.commit()
 
 def add_population(cur, conn, start_index, data):
 
@@ -127,7 +119,7 @@ def main():
 
 
     # SETUP DATABASE AND TABLE
-    cur, conn = setUpDatabase('database.db')
+    cur, conn = set_up_database('database.db')
     
     # CREATE TABLES
     # code table
