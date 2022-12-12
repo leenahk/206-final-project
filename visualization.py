@@ -35,7 +35,7 @@ def over_65(final_res):
         percentage = i[6]/i[7]
         pop[i[0]] = percentage
 
-    plt.barh((list(pop.keys())), (list(pop.values())), color = [ 'teal','darkorange', 'forestgreen', 'mediumpurple', 'royalblue', 'gold'])
+    plt.barh((list(pop.keys())), (list(pop.values())), color = [ 'teal','gold', 'forestgreen', 'mediumpurple', 'royalblue', 'darkorange'])
     plt.title("Percentage of Population Over 65 Per Country")
     plt.ylabel("Country")
     plt.xlabel("Percentage of Population Over 65")
@@ -48,7 +48,7 @@ def over_65(final_res):
         percentage = i[3]/i[2]
         cases_deaths[i[0]] = percentage
 
-    plt.barh((list(cases_deaths.keys())), (list(cases_deaths.values())), color = [ 'teal','darkorange', 'forestgreen', 'mediumpurple', 'royalblue', 'gold'])
+    plt.barh((list(cases_deaths.keys())), (list(cases_deaths.values())), color = [ 'teal','gold', 'forestgreen', 'mediumpurple', 'royalblue', 'darkorange'])
     plt.title("Percentage of COVID-19 Deaths Per Country")
     plt.ylabel("Country")
     plt.xlabel("Percentage of Deaths")
@@ -65,7 +65,7 @@ def under_35(final_res):
         percentage = i[5]/i[7]
         pop[i[0]] = percentage
 
-    plt.barh((list(pop.keys())), (list(pop.values())), color = [ 'teal','darkorange', 'forestgreen', 'mediumpurple', 'royalblue', 'gold'])
+    plt.barh((list(pop.keys())), (list(pop.values())), color = [ 'teal','gold', 'forestgreen', 'mediumpurple', 'royalblue', 'darkorange'])
     plt.title("Percentage of Population Under 35 Per Country")
     plt.ylabel("Country")
     plt.xlabel("Percentage of Population Under 35")
@@ -78,7 +78,7 @@ def under_35(final_res):
         percentage = i[2]/i[7]
         cases[i[0]] = percentage
 
-    plt.barh((list(cases.keys())), (list(cases.values())), color = [ 'teal','darkorange', 'forestgreen', 'mediumpurple', 'royalblue', 'gold'])
+    plt.barh((list(cases.keys())), (list(cases.values())), color = [ 'teal','gold', 'forestgreen', 'mediumpurple', 'royalblue', 'darkorange'])
     plt.title("Percentage of COVID-19 Cases Per Country")
     plt.ylabel("Country")
     plt.xlabel("Percentage of Cases")
